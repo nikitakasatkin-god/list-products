@@ -1,156 +1,140 @@
 package com.example.praktikalistproducts;
 
+import com.example.praktikalistproducts.model.Product;
+import com.example.praktikalistproducts.model.Tag;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 
 public class HelloController {
-    @FXML
-    private TableView<Product> table;
+    @FXML private TableView<Product> table;
+    @FXML private TableColumn<Product, Integer> idColumn;
+    @FXML private TableColumn<Product, String> nameColumn;
+    @FXML private TableColumn<Product, Integer> countColumn;
+    @FXML private TableColumn<Product, String> tagColumn;
+    @FXML private TableColumn<Product, String> statusColumn;
 
-    @FXML
-    private TableColumn<Product, Integer> idColumn;
+    @FXML private TextField nameField;
+    @FXML private TextField countField;
+    @FXML private TextField tagField;
+    @FXML private TextField statusField;
 
-    @FXML
-    private TableColumn<Product, String> nameColumn;
+    @FXML private Button addButton;
+    @FXML private Button editButton;
+    @FXML private Button deleteButton;
+    @FXML private ComboBox<String> tagFilterComboBox;
+    @FXML private Button filterButton;
 
-    @FXML
-    private TableColumn<Product, Integer> countColumn;
-
-    @FXML
-    private TableColumn<Product, String> tagColumn;
-
-    @FXML
-    private TableColumn<Product, String> statusColumn;
-
-    @FXML
-    private TextField nameField;
-
-    @FXML
-    private TextField countField;
-
-    @FXML
-    private TextField tagField;
-
-    @FXML
-    private TextField statusField;
-
-    @FXML
-    private Button addButton;
-
-    @FXML
-    private Button editButton;
-
-    @FXML
-    private Button deleteButton; // Новая кнопка "Удалить"
-
-    @FXML
-    private ComboBox<String> tagFilterComboBox;
-
-    @FXML
-    private Button filterButton;
-
-    private ListProduct listProduct = new ListProduct();
-
-    private int nextId = 1;
-
-    private ObservableList<String> tags = FXCollections.observableArrayList(); // Список тегов
+    private final ObservableList<Product> products = FXCollections.observableArrayList();
+    private final ObservableList<String> tags = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
         // Настройка колонок таблицы
-        idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
-        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
-        countColumn.setCellValueFactory(new PropertyValueFactory<>("count"));
+        idColumn.setCellValueFactory(cellData -> cellData.getValue().idProperty().asObject());
+        nameColumn.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
+        countColumn.setCellValueFactory(cellData -> cellData.getValue().countProperty().asObject());
         tagColumn.setCellValueFactory(cellData -> cellData.getValue().getTag().tagProperty());
-        statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
+        statusColumn.setCellValueFactory(cellData -> cellData.getValue().statusProperty());
 
-        // Загрузка данных в таблицу
-        table.setItems(listProduct.getProducts());
+        // Загрузка тестовых данных
+        loadSampleData();
 
-        // Обработка кнопки "Добавить"
-        addButton.setOnAction(event -> addProduct());
-
-        // Обработка кнопки "Изменить"
-        editButton.setOnAction(event -> editProduct());
-
-        // Обработка кнопки "Удалить"
-        deleteButton.setOnAction(event -> deleteProduct());
-
-        // Заполнение текстовых полей при выборе строки
-        table.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            if (newSelection != null) {
-                fillFieldsWithSelectedProduct(newSelection);
-            }
-        });
-
-        // Инициализация ComboBox с тегами
+        // Настройка ComboBox
+        updateTagsList();
         tagFilterComboBox.setItems(tags);
 
-        // Обработка кнопки "Фильтровать по тегу"
-        filterButton.setOnAction(event -> filterProductsByTag());
+        // Настройка обработчиков событий
+        setupEventHandlers();
+    }
+
+    private void loadSampleData() {
+        products.addAll(
+                new Product(1, "Ноутбук", 5, new Tag(1, "электроника"), "в наличии"),
+                new Product(2, "Мышь", 10, new Tag(2, "аксессуар"), "в наличии"),
+                new Product(3, "Клавиатура", 7, new Tag(3, "аксессуар"), "под заказ")
+        );
+
+        table.setItems(products);
+    }
+
+    private void updateTagsList() {
+        tags.clear();
+        products.stream()
+                .map(p -> p.getTag().getTag())
+                .distinct()
+                .forEach(tags::add);
+    }
+
+    private void setupEventHandlers() {
+        addButton.setOnAction(e -> addProduct());
+        editButton.setOnAction(e -> editProduct());
+        deleteButton.setOnAction(e -> deleteProduct());
+        filterButton.setOnAction(e -> filterProducts());
+
+        table.getSelectionModel().selectedItemProperty().addListener(
+                (obs, oldSelection, newSelection) -> {
+                    if (newSelection != null) {
+                        fillFields(newSelection);
+                    }
+                });
     }
 
     private void addProduct() {
-        String name = nameField.getText();
-        int count = Integer.parseInt(countField.getText());
-        String tagText = tagField.getText();
-        String status = statusField.getText();
+        try {
+            Product product = new Product(
+                    products.size() + 1,
+                    nameField.getText(),
+                    Integer.parseInt(countField.getText()),
+                    new Tag(products.size() + 1, tagField.getText()),
+                    statusField.getText()
+            );
 
-        // Создаем объект Tag
-        Tag tag = new Tag(nextId, tagText);
-
-        // Создаем продукт с уникальным id
-        Product product = new Product(nextId, name, count, tag, status);
-        listProduct.addProduct(product);
-
-        // Добавляем тег в ComboBox, если его еще нет
-        if (!tags.contains(tagText)) {
-            tags.add(tagText);
+            products.add(product);
+            updateTagsList();
+            clearFields();
+        } catch (NumberFormatException e) {
+            showAlert("Ошибка", "Некорректное количество", "Введите число в поле 'Количество'");
         }
-
-        // Увеличиваем id для следующего товара
-        nextId++;
-
-        // Очистка полей ввода
-        clearFields();
     }
 
     private void editProduct() {
-        Product selectedProduct = table.getSelectionModel().getSelectedItem();
-        if (selectedProduct != null) {
-            // Обновляем данные выбранного продукта
-            selectedProduct.setName(nameField.getText());
-            selectedProduct.setCount(Integer.parseInt(countField.getText()));
-            selectedProduct.getTag().setTag(tagField.getText());
-            selectedProduct.setStatus(statusField.getText());
+        Product selected = table.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            try {
+                selected.setName(nameField.getText());
+                selected.setCount(Integer.parseInt(countField.getText()));
+                selected.getTag().setTag(tagField.getText());
+                selected.setStatus(statusField.getText());
 
-            // Обновляем таблицу
-            table.refresh();
-
-            // Очистка полей ввода
-            clearFields();
+                table.refresh();
+                updateTagsList();
+            } catch (NumberFormatException e) {
+                showAlert("Ошибка", "Некорректное количество", "Введите число в поле 'Количество'");
+            }
         }
     }
 
     private void deleteProduct() {
-        Product selectedProduct = table.getSelectionModel().getSelectedItem();
-        if (selectedProduct != null) {
-            // Удаляем продукт из списка
-            listProduct.getProducts().remove(selectedProduct);
-
-            // Обновляем таблицу
-            table.refresh();
-
-            // Очистка полей ввода
+        Product selected = table.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            products.remove(selected);
+            updateTagsList();
             clearFields();
         }
     }
 
-    private void fillFieldsWithSelectedProduct(Product product) {
+    private void filterProducts() {
+        String selectedTag = tagFilterComboBox.getSelectionModel().getSelectedItem();
+        if (selectedTag != null && !selectedTag.isEmpty()) {
+            table.setItems(products.filtered(p -> p.getTag().getTag().equals(selectedTag)));
+        } else {
+            table.setItems(products);
+        }
+    }
+
+    private void fillFields(Product product) {
         nameField.setText(product.getName());
         countField.setText(String.valueOf(product.getCount()));
         tagField.setText(product.getTag().getTag());
@@ -164,17 +148,11 @@ public class HelloController {
         statusField.clear();
     }
 
-    private void filterProductsByTag() {
-        String selectedTag = tagFilterComboBox.getSelectionModel().getSelectedItem();
-        if (selectedTag != null && !selectedTag.isEmpty()) {
-            // Фильтруем товары по выбранному тегу
-            FilteredList<Product> filteredProducts = listProduct.getProducts().filtered(
-                    product -> product.getTag().getTag().equals(selectedTag)
-            );
-            table.setItems(filteredProducts);
-        } else {
-            // Если тег не выбран, показываем все товары
-            table.setItems(listProduct.getProducts());
-        }
+    private void showAlert(String title, String header, String content) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 }

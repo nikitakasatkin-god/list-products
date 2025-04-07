@@ -1,67 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.*?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="650.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.praktikalistproducts.HelloController">
-  <children>
-    <HBox prefHeight="350.0" prefWidth="200.0">
-      <children>
-        <TableView fx:id="table" prefHeight="200.0" prefWidth="450.0">
-          <columns>
-            <TableColumn fx:id="idColumn" prefWidth="50.0" text="ID" />
-            <TableColumn fx:id="nameColumn" prefWidth="75.0" text="Название" />
-            <TableColumn fx:id="countColumn" prefWidth="75.0" text="Количество" />
-            <TableColumn fx:id="tagColumn" prefWidth="75.0" text="Тег" />
-            <TableColumn fx:id="statusColumn" prefWidth="75.0" text="Статус" />
-          </columns>
-          <HBox.margin>
-            <Insets />
-          </HBox.margin>
-        </TableView>
-        <VBox prefHeight="330.0" prefWidth="181.0">
-          <children>
-            <Label contentDisplay="CENTER" text="Добавить/Изменить/Удалить продукты">
-              <VBox.margin>
-                <Insets left="20.0" />
-              </VBox.margin>
-            </Label>
-            <TextField fx:id="nameField" promptText="Название" />
-            <TextField fx:id="countField" promptText="Количество" />
-            <TextField fx:id="tagField" promptText="Тег" />
-            <TextField fx:id="statusField" promptText="Статус" />
-            <Button fx:id="addButton" mnemonicParsing="false" text="Добавить">
-              <VBox.margin>
-                <Insets left="40.0" top="20.0" />
-              </VBox.margin>
-            </Button>
-            <Button fx:id="editButton" mnemonicParsing="false" text="Изменить">
-              <VBox.margin>
-                <Insets left="40.0" top="10.0" />
-              </VBox.margin>
-            </Button>
-            <Button fx:id="deleteButton" mnemonicParsing="false" text="Удалить">
-              <VBox.margin>
-                <Insets left="40.0" top="10.0" />
-              </VBox.margin>
-            </Button>
-            <ComboBox fx:id="tagFilterComboBox" promptText="Выберите тег">
-              <VBox.margin>
-                <Insets left="40.0" top="10.0" />
-              </VBox.margin>
-            </ComboBox>
-            <Button fx:id="filterButton" mnemonicParsing="false" text="Фильтровать по тегу">
-              <VBox.margin>
-                <Insets left="40.0" top="10.0" />
-              </VBox.margin>
-            </Button>
-          </children>
-          <HBox.margin>
-            <Insets left="20.0" right="20.0" top="20.0" />
-          </HBox.margin>
-        </VBox>
-      </children>
-    </HBox>
-  </children>
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.praktikalistproducts.HelloController"
+      spacing="10">
+  <padding>
+    <Insets top="10" right="10" bottom="10" left="10"/>
+  </padding>
+
+  <HBox spacing="10">
+    <TableView fx:id="table" prefHeight="400" prefWidth="500">
+      <columns>
+        <TableColumn fx:id="idColumn" text="ID" prefWidth="50"/>
+        <TableColumn fx:id="nameColumn" text="Название" prefWidth="150"/>
+        <TableColumn fx:id="countColumn" text="Количество" prefWidth="80"/>
+        <TableColumn fx:id="tagColumn" text="Тег" prefWidth="100"/>
+        <TableColumn fx:id="statusColumn" text="Статус" prefWidth="120"/>
+      </columns>
+    </TableView>
+
+    <VBox spacing="10" prefWidth="200">
+      <Label text="Добавить/Изменить продукт"/>
+      <TextField fx:id="nameField" promptText="Название"/>
+      <TextField fx:id="countField" promptText="Количество"/>
+      <TextField fx:id="tagField" promptText="Тег"/>
+      <TextField fx:id="statusField" promptText="Статус"/>
+
+      <Button fx:id="addButton" text="Добавить" maxWidth="Infinity"/>
+      <Button fx:id="editButton" text="Изменить" maxWidth="Infinity"/>
+      <Button fx:id="deleteButton" text="Удалить" maxWidth="Infinity"/>
+
+      <Separator/>
+
+      <ComboBox fx:id="tagFilterComboBox" promptText="Выберите тег"/>
+      <Button fx:id="filterButton" text="Фильтровать по тегу" maxWidth="Infinity"/>
+    </VBox>
+  </HBox>
 </VBox>
