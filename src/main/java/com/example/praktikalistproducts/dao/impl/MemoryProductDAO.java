@@ -8,15 +8,16 @@ import java.util.List;
 import java.util.Random;
 
 public class MemoryProductDAO implements ProductDAO {
-    private final List<Product> products;
-    private final Random random = new Random();
+    private final List<Product> products = new ArrayList<>();
 
-    public MemoryProductDAO(int initialCapacity) {
-        this.products = new ArrayList<>(initialCapacity);
-        generateSampleData(initialCapacity);
+    public MemoryProductDAO() {
+        // Тестовые данные
+        products.add(new Product(1, "Ноутбук", 5, new Tag(1, "электроника"), "в наличии"));
+        products.add(new Product(2, "Мышь", 10, new Tag(2, "аксессуар"), "в наличии"));
+        products.add(new Product(3, "Клавиатура", 7, new Tag(3, "аксессуар"), "под заказ"));
     }
 
-    private void generateSampleData(int count) {
+    /*private void generateSampleData(int count) {
         String[] sampleNames = {"Ноутбук", "Телефон", "Планшет", "Монитор", "Клавиатура"};
         String[] sampleTags = {"электроника", "офис", "техника", "гаджет", "аксессуар"};
         String[] sampleStatuses = {"в наличии", "под заказ", "нет в наличии"};
@@ -30,7 +31,7 @@ public class MemoryProductDAO implements ProductDAO {
                     sampleStatuses[random.nextInt(sampleStatuses.length)]
             ));
         }
-    }
+    }*/
 
     @Override
     public List<Product> getAllProducts() {

@@ -1,11 +1,15 @@
 package com.example.praktikalistproducts;
 
+import com.example.praktikalistproducts.dao.ProductDAO;
+import com.example.praktikalistproducts.dao.ProductFactory;
 import com.example.praktikalistproducts.model.Product;
 import com.example.praktikalistproducts.model.Tag;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.Tooltip;
 
 public class HelloController {
     @FXML private TableView<Product> table;
@@ -25,9 +29,37 @@ public class HelloController {
     @FXML private Button deleteButton;
     @FXML private ComboBox<String> tagFilterComboBox;
     @FXML private Button filterButton;
+    @FXML private Button clearFilterButton;
 
+    @FXML private RadioButton dbRadio;
+    @FXML private RadioButton fileRadio;
+    @FXML private RadioButton ramRadio;
+
+    private ProductDAO productDAO;
     private final ObservableList<Product> products = FXCollections.observableArrayList();
     private final ObservableList<String> tags = FXCollections.observableArrayList();
+    private FilteredList<Product> filteredProducts;
+
+    private enum ButtonHint {
+        ADD_BUTTON("Добавить новый продукт"),
+        EDIT_BUTTON("Редактировать выбранный продукт"),
+        DELETE_BUTTON("Удалить выбранный продукт"),
+        FILTER_BUTTON("Фильтровать продукты по выбранному тегу"),
+        CLEAR_FILTER_BUTTON("Сбросить фильтр"),
+        DB_RADIO("Использовать базу данных для хранения"),
+        FILE_RADIO("Использовать файл для хранения"),
+        RAM_RADIO("Использовать оперативную память для хранения");
+
+        private final String hint;
+
+        ButtonHint(String hint) {
+            this.hint = hint;
+        }
+
+        public String getHint() {
+            return hint;
+        }
+    }
 
     @FXML
     public void initialize() {
@@ -38,40 +70,79 @@ public class HelloController {
         tagColumn.setCellValueFactory(cellData -> cellData.getValue().getTag().tagProperty());
         statusColumn.setCellValueFactory(cellData -> cellData.getValue().statusProperty());
 
-        // Загрузка тестовых данных
-        loadSampleData();
+        // Инициализация FilteredList
+        filteredProducts = new FilteredList<>(products);
+        table.setItems(filteredProducts);
 
-        // Настройка ComboBox
-        updateTagsList();
-        tagFilterComboBox.setItems(tags);
+        // Настройка ToggleGroup для RadioButton
+        ToggleGroup dataSourceGroup = new ToggleGroup();
+        dbRadio.setToggleGroup(dataSourceGroup);
+        fileRadio.setToggleGroup(dataSourceGroup);
+        ramRadio.setToggleGroup(dataSourceGroup);
+        dbRadio.setSelected(true);
+
+        // Настройка Tooltip для кнопок
+        setupTooltips();
+
+
+        // Инициализация данных
+        changeDataSource();
 
         // Настройка обработчиков событий
         setupEventHandlers();
     }
 
-    private void loadSampleData() {
-        products.addAll(
-                new Product(1, "Ноутбук", 5, new Tag(1, "электроника"), "в наличии"),
-                new Product(2, "Мышь", 10, new Tag(2, "аксессуар"), "в наличии"),
-                new Product(3, "Клавиатура", 7, new Tag(3, "аксессуар"), "под заказ")
-        );
-
-        table.setItems(products);
+    private void setupTooltips() {
+        setTooltipForControl(addButton, ButtonHint.ADD_BUTTON);
+        setTooltipForControl(editButton, ButtonHint.EDIT_BUTTON);
+        setTooltipForControl(deleteButton, ButtonHint.DELETE_BUTTON);
+        setTooltipForControl(filterButton, ButtonHint.FILTER_BUTTON);
+        setTooltipForControl(clearFilterButton, ButtonHint.CLEAR_FILTER_BUTTON);
+        setTooltipForControl(dbRadio, ButtonHint.DB_RADIO);
+        setTooltipForControl(fileRadio, ButtonHint.FILE_RADIO);
+        setTooltipForControl(ramRadio, ButtonHint.RAM_RADIO);
     }
 
-    private void updateTagsList() {
-        tags.clear();
-        products.stream()
-                .map(p -> p.getTag().getTag())
-                .distinct()
-                .forEach(tags::add);
+    private void setTooltipForControl(Control control, ButtonHint buttonHint) {
+        String hintText;
+        switch (buttonHint) {
+            case ADD_BUTTON:
+                hintText = ButtonHint.ADD_BUTTON.getHint();
+                break;
+            case EDIT_BUTTON:
+                hintText = ButtonHint.EDIT_BUTTON.getHint();
+                break;
+            case DELETE_BUTTON:
+                hintText = ButtonHint.DELETE_BUTTON.getHint();
+                break;
+            case FILTER_BUTTON:
+                hintText = ButtonHint.FILTER_BUTTON.getHint();
+                break;
+            case CLEAR_FILTER_BUTTON:
+                hintText = ButtonHint.CLEAR_FILTER_BUTTON.getHint();
+                break;
+            case DB_RADIO:
+                hintText = ButtonHint.DB_RADIO.getHint();
+                break;
+            case FILE_RADIO:
+                hintText = ButtonHint.FILE_RADIO.getHint();
+                break;
+            case RAM_RADIO:
+                hintText = ButtonHint.RAM_RADIO.getHint();
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown button hint: " + buttonHint);
+        }
+        control.setTooltip(new Tooltip(hintText));
     }
 
+    // Остальные методы остаются без изменений
     private void setupEventHandlers() {
-        addButton.setOnAction(e -> addProduct());
-        editButton.setOnAction(e -> editProduct());
-        deleteButton.setOnAction(e -> deleteProduct());
-        filterButton.setOnAction(e -> filterProducts());
+        addButton.setOnAction(event -> addProduct());
+        editButton.setOnAction(event -> editProduct());
+        deleteButton.setOnAction(event -> deleteProduct());
+        filterButton.setOnAction(event -> filterProducts());
+        clearFilterButton.setOnAction(event -> clearFilter());
 
         table.getSelectionModel().selectedItemProperty().addListener(
                 (obs, oldSelection, newSelection) -> {
@@ -81,57 +152,126 @@ public class HelloController {
                 });
     }
 
+    @FXML
+    private void changeDataSource() {
+        String selectedSource;
+        if (dbRadio.isSelected()) {
+            selectedSource = ProductFactory.DB;
+        } else if (fileRadio.isSelected()) {
+            selectedSource = ProductFactory.MYSQL;
+        } else {
+            selectedSource = ProductFactory.RAM;
+        }
+
+        try {
+            productDAO = ProductFactory.createProductDAO(selectedSource);
+            refreshData();
+        } catch (Exception e) {
+            showAlert("Ошибка", "Не удалось подключиться к источнику данных",
+                    "Используется хранение в памяти");
+            ramRadio.setSelected(true);
+            productDAO = ProductFactory.createProductDAO(ProductFactory.RAM);
+            refreshData();
+        }
+    }
+
+    private void refreshData() {
+        products.setAll(productDAO.getAllProducts());
+        updateTagsList();
+    }
+
+    private void updateTagsList() {
+        tags.clear();
+        products.stream()
+                .map(p -> p.getTag().getTag())
+                .distinct()
+                .forEach(tags::add);
+        tagFilterComboBox.setItems(tags);
+    }
+
     private void addProduct() {
         try {
-            Product product = new Product(
-                    products.size() + 1,
-                    nameField.getText(),
-                    Integer.parseInt(countField.getText()),
-                    new Tag(products.size() + 1, tagField.getText()),
-                    statusField.getText()
-            );
+            String name = nameField.getText().trim();
+            int count = Integer.parseInt(countField.getText().trim());
+            String tag = tagField.getText().trim();
+            String status = statusField.getText().trim();
 
-            products.add(product);
-            updateTagsList();
+            if (name.isEmpty() || tag.isEmpty() || status.isEmpty()) {
+                showAlert("Ошибка", "Пустые поля", "Все поля должны быть заполнены");
+                return;
+            }
+
+            Product newProduct = new Product(0, name, count, new Tag(0, tag), status);
+            productDAO.addProduct(newProduct);
+            refreshData();
             clearFields();
         } catch (NumberFormatException e) {
             showAlert("Ошибка", "Некорректное количество", "Введите число в поле 'Количество'");
+        } catch (Exception e) {
+            showAlert("Ошибка", "Ошибка добавления", e.getMessage());
         }
     }
 
     private void editProduct() {
         Product selected = table.getSelectionModel().getSelectedItem();
-        if (selected != null) {
-            try {
-                selected.setName(nameField.getText());
-                selected.setCount(Integer.parseInt(countField.getText()));
-                selected.getTag().setTag(tagField.getText());
-                selected.setStatus(statusField.getText());
+        if (selected == null) {
+            showAlert("Ошибка", "Не выбран продукт", "Выберите продукт для редактирования");
+            return;
+        }
 
-                table.refresh();
-                updateTagsList();
-            } catch (NumberFormatException e) {
-                showAlert("Ошибка", "Некорректное количество", "Введите число в поле 'Количество'");
+        try {
+            String name = nameField.getText().trim();
+            int count = Integer.parseInt(countField.getText().trim());
+            String tag = tagField.getText().trim();
+            String status = statusField.getText().trim();
+
+            if (name.isEmpty() || tag.isEmpty() || status.isEmpty()) {
+                showAlert("Ошибка", "Пустые поля", "Все поля должны быть заполнены");
+                return;
             }
+
+            selected.setName(name);
+            selected.setCount(count);
+            selected.getTag().setTag(tag);
+            selected.setStatus(status);
+
+            productDAO.updateProduct(selected);
+            refreshData();
+            clearFields();
+        } catch (NumberFormatException e) {
+            showAlert("Ошибка", "Некорректное количество", "Введите число в поле 'Количество'");
+        } catch (Exception e) {
+            showAlert("Ошибка", "Ошибка редактирования", e.getMessage());
         }
     }
 
     private void deleteProduct() {
         Product selected = table.getSelectionModel().getSelectedItem();
-        if (selected != null) {
-            products.remove(selected);
-            updateTagsList();
+        if (selected == null) {
+            showAlert("Ошибка", "Не выбран продукт", "Выберите продукт для удаления");
+            return;
+        }
+
+        try {
+            productDAO.deleteProduct(selected.getId());
+            refreshData();
             clearFields();
+        } catch (Exception e) {
+            showAlert("Ошибка", "Ошибка удаления", e.getMessage());
         }
     }
 
     private void filterProducts() {
         String selectedTag = tagFilterComboBox.getSelectionModel().getSelectedItem();
         if (selectedTag != null && !selectedTag.isEmpty()) {
-            table.setItems(products.filtered(p -> p.getTag().getTag().equals(selectedTag)));
-        } else {
-            table.setItems(products);
+            filteredProducts.setPredicate(product ->
+                    product.getTag().getTag().equalsIgnoreCase(selectedTag));
         }
+    }
+
+    private void clearFilter() {
+        filteredProducts.setPredicate(null);
+        tagFilterComboBox.getSelectionModel().clearSelection();
     }
 
     private void fillFields(Product product) {

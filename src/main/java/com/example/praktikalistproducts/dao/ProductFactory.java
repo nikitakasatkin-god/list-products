@@ -1,21 +1,34 @@
 package com.example.praktikalistproducts.dao;
 
-import com.example.praktikalistproducts.dao.impl.*;
+import com.example.praktikalistproducts.dao.impl.MySQLProductDAO;
+import com.example.praktikalistproducts.dao.impl.MemoryProductDAO;
+import com.example.praktikalistproducts.dao.impl.PostgresProductDAO;
 
 public class ProductFactory {
-    public static final String DB = "база данных";
-    public static final String FILE = "файл";
-    public static final String RAM = "временно";
+    public static final String DB = "DB";
+    public static final String MYSQL = "MYSQL";
+    public static final String RAM = "RAM";
 
     public static ProductDAO createProductDAO(String type) {
-        if (type.equalsIgnoreCase(DB)) {
-            return new PostgresProductDAO();
-        } else if (type.equalsIgnoreCase(FILE)) {
-            return new FileProductDAO("products.txt"); // Передаем имя файла
-        } else if (type.equalsIgnoreCase(RAM)) {
-            return new MemoryProductDAO(10); // С начальной емкостью 10
-        } else {
-            throw new IllegalArgumentException("Неверный тип хранилища!");
+        if (type == null || type.isEmpty()) {
+            throw new IllegalArgumentException("Тип источника данных не может быть пустым");
+        }
+
+        try {
+            switch (type) {
+                case DB:
+                    return new PostgresProductDAO();
+                case MYSQL:
+                    return new MySQLProductDAO();
+                case RAM:
+                    return new MemoryProductDAO();
+                default:
+                    throw new IllegalArgumentException("Неизвестный тип источника данных: " + type);
+            }
+        } catch (Exception e) {
+            System.err.println("Ошибка при создании DAO для типа " + type);
+            e.printStackTrace();
+            throw e;
         }
     }
 }

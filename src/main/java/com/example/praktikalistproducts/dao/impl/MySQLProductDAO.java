@@ -7,56 +7,42 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PostgresProductDAO implements ProductDAO {
+public class MySQLProductDAO implements ProductDAO {
     private Connection conn;
 
-    public PostgresProductDAO() {
+    // Конструктор - устанавливает соединение с MySQL
+    public MySQLProductDAO() {
+        String url = "jdbc:mysql://localhost:3306/product_db?useSSL=false&serverTimezone=UTC";
+        String user = "root";
+        String password = "your_password";
+
         try {
-            Class.forName("org.postgresql.Driver");
-            conn = DriverManager.getConnection(
-                    "jdbc:postgresql://localhost:5432/postgres",
-                    "postgres",
-                    "password");
+            conn = DriverManager.getConnection(url, user, password);
+            System.out.println("Подключение к MySQL через DBeaver успешно!");
             initializeDatabase();
-        } catch (Exception e) {
+        } catch (SQLException e) {
+            System.err.println("Ошибка подключения к MySQL:");
             e.printStackTrace();
         }
     }
 
-    private void initializeConnection() {
-        try {
-            Class.forName("org.postgresql.Driver");
-            conn = DriverManager.getConnection(
-                    "jdbc:postgresql://localhost:5432/product_db",
-                    "postgres",
-                    "password");
-            initializeDatabase();
-        } catch (Exception e) {
-            System.err.println("Ошибка при подключении к PostgreSQL:");
-            e.printStackTrace();
-            conn = null; // Явно указываем, что соединение не установлено
-        }
-    }
-
+    // Создает таблицу products, если она не существует
     private void initializeDatabase() throws SQLException {
         try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS products (" +
-                    "id SERIAL PRIMARY KEY," +
+                    "id INT AUTO_INCREMENT PRIMARY KEY," +
                     "name VARCHAR(255) NOT NULL," +
-                    "count INTEGER," +
+                    "count INT," +
                     "tag VARCHAR(255)," +
                     "status VARCHAR(255))");
         }
     }
 
+    // Получает все продукты из таблицы
     @Override
     public List<Product> getAllProducts() {
-        if (conn == null) {
-            System.err.println("Нет подключения к БД");
-            return new ArrayList<>(); // Возвращаем пустой список вместо null
-        }
-
         List<Product> products = new ArrayList<>();
+
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT * FROM products")) {
 
@@ -76,24 +62,7 @@ public class PostgresProductDAO implements ProductDAO {
         return products;
     }
 
-    @Override
-    public Product getProductById(int id) {
-        String sql = "SELECT * FROM products WHERE id = ?";
-
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, id);
-
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapResultSetToProduct(rs);
-                }
-            }
-        } catch (SQLException e) {
-            handleSQLException(e);
-        }
-        return null;
-    }
-
+    // Добавляет новый продукт в таблицу
     @Override
     public void addProduct(Product product) {
         String sql = "INSERT INTO products (name, count, tag, status) VALUES (?, ?, ?, ?)";
@@ -105,16 +74,19 @@ public class PostgresProductDAO implements ProductDAO {
             pstmt.setString(4, product.getStatus());
             pstmt.executeUpdate();
 
+            // Получаем сгенерированный ID
             try (ResultSet rs = pstmt.getGeneratedKeys()) {
                 if (rs.next()) {
                     product.setId(rs.getInt(1));
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при добавлении продукта", e);
+            System.err.println("Ошибка при добавлении продукта:");
+            e.printStackTrace();
         }
     }
 
+    // Обновляет существующий продукт
     @Override
     public void updateProduct(Product product) {
         String sql = "UPDATE products SET name = ?, count = ?, tag = ?, status = ? WHERE id = ?";
@@ -127,10 +99,12 @@ public class PostgresProductDAO implements ProductDAO {
             pstmt.setInt(5, product.getId());
             pstmt.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при обновлении продукта", e);
+            System.err.println("Ошибка при обновлении продукта:");
+            e.printStackTrace();
         }
     }
 
+    // Удаляет продукт по ID
     @Override
     public void deleteProduct(int id) {
         String sql = "DELETE FROM products WHERE id = ?";
@@ -139,39 +113,47 @@ public class PostgresProductDAO implements ProductDAO {
             pstmt.setInt(1, id);
             pstmt.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при удалении продукта", e);
-        }
-    }
-
-    /**
-     * Закрывает соединение с базой данных
-     */
-    public void shutdown() {
-        try {
-            if (conn != null && !conn.isClosed()) {
-                conn.close();
-                System.out.println("Соединение с базой данных закрыто");
-            }
-        } catch (SQLException e) {
-            System.err.println("Ошибка при закрытии соединения");
+            System.err.println("Ошибка при удалении продукта:");
             e.printStackTrace();
         }
     }
 
-    private Product mapResultSetToProduct(ResultSet rs) throws SQLException {
-        return new Product(
-                rs.getInt("id"),
-                rs.getString("name"),
-                rs.getInt("count"),
-                new Tag(rs.getInt("id"), rs.getString("tag")),
-                rs.getString("status")
-        );
+    // Получает продукт по ID
+    @Override
+    public Product getProductById(int id) {
+        String sql = "SELECT * FROM products WHERE id = ?";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return new Product(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getInt("count"),
+                            new Tag(rs.getInt("id"), rs.getString("tag")),
+                            rs.getString("status")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при получении продукта по ID:");
+            e.printStackTrace();
+        }
+        return null;
     }
 
-    private void handleSQLException(SQLException e) {
-        System.err.println("SQL ошибка:");
-        System.err.println("Сообщение: " + e.getMessage());
-        System.err.println("Код ошибки: " + e.getErrorCode());
-        System.err.println("Состояние SQL: " + e.getSQLState());
+    // Закрывает соединение с базой данных
+    public void close() {
+        try {
+            if (conn != null && !conn.isClosed()) {
+                conn.close();
+                System.out.println("Соединение с MySQL закрыто");
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при закрытии соединения:");
+            e.printStackTrace();
+        }
     }
 }
