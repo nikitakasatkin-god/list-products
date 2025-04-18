@@ -7,9 +7,16 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Реализация ProductDAO для работы с PostgreSQL базой данных.
+ */
 public class PostgresProductDAO implements ProductDAO {
     private Connection conn;
 
+    /**
+     * Конструктор, инициализирующий подключение к PostgreSQL.
+     * Автоматически создает таблицу products, если она не существует.
+     */
     public PostgresProductDAO() {
         try {
             Class.forName("org.postgresql.Driver");
@@ -23,6 +30,10 @@ public class PostgresProductDAO implements ProductDAO {
         }
     }
 
+    /**
+     * Инициализирует подключение к базе данных.
+     * Используется для повторного подключения при необходимости.
+     */
     private void initializeConnection() {
         try {
             Class.forName("org.postgresql.Driver");
@@ -38,6 +49,10 @@ public class PostgresProductDAO implements ProductDAO {
         }
     }
 
+    /**
+     * Создает таблицу products, если она не существует.
+     * @throws SQLException если произошла ошибка при выполнении SQL-запроса
+     */
     private void initializeDatabase() throws SQLException {
         try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS products (" +
@@ -49,6 +64,10 @@ public class PostgresProductDAO implements ProductDAO {
         }
     }
 
+    /**
+     * Получает список всех продуктов из базы данных.
+     * @return список продуктов или пустой список, если произошла ошибка
+     */
     @Override
     public List<Product> getAllProducts() {
         if (conn == null) {
@@ -76,6 +95,11 @@ public class PostgresProductDAO implements ProductDAO {
         return products;
     }
 
+    /**
+     * Находит продукт по его идентификатору.
+     * @param id идентификатор продукта
+     * @return найденный продукт или null, если продукт не найден
+     */
     @Override
     public Product getProductById(int id) {
         String sql = "SELECT * FROM products WHERE id = ?";
@@ -94,6 +118,11 @@ public class PostgresProductDAO implements ProductDAO {
         return null;
     }
 
+    /**
+     * Добавляет новый продукт в базу данных.
+     * @param product продукт для добавления
+     * @throws RuntimeException если произошла ошибка при добавлении
+     */
     @Override
     public void addProduct(Product product) {
         String sql = "INSERT INTO products (name, count, tag, status) VALUES (?, ?, ?, ?)";
@@ -115,6 +144,11 @@ public class PostgresProductDAO implements ProductDAO {
         }
     }
 
+    /**
+     * Обновляет существующий продукт в базе данных.
+     * @param product продукт с обновленными данными
+     * @throws RuntimeException если произошла ошибка при обновлении
+     */
     @Override
     public void updateProduct(Product product) {
         String sql = "UPDATE products SET name = ?, count = ?, tag = ?, status = ? WHERE id = ?";
@@ -131,6 +165,11 @@ public class PostgresProductDAO implements ProductDAO {
         }
     }
 
+    /**
+     * Удаляет продукт из базы данных по идентификатору.
+     * @param id идентификатор продукта для удаления
+     * @throws RuntimeException если произошла ошибка при удалении
+     */
     @Override
     public void deleteProduct(int id) {
         String sql = "DELETE FROM products WHERE id = ?";
@@ -144,7 +183,7 @@ public class PostgresProductDAO implements ProductDAO {
     }
 
     /**
-     * Закрывает соединение с базой данных
+     * Закрывает соединение с базой данных.
      */
     public void shutdown() {
         try {
@@ -158,6 +197,12 @@ public class PostgresProductDAO implements ProductDAO {
         }
     }
 
+    /**
+     * Преобразует строку ResultSet в объект Product.
+     * @param rs ResultSet с данными продукта
+     * @return объект Product
+     * @throws SQLException если произошла ошибка при чтении данных
+     */
     private Product mapResultSetToProduct(ResultSet rs) throws SQLException {
         return new Product(
                 rs.getInt("id"),
@@ -168,6 +213,10 @@ public class PostgresProductDAO implements ProductDAO {
         );
     }
 
+    /**
+     * Обрабатывает SQLException, выводя детальную информацию об ошибке.
+     * @param e исключение SQLException
+     */
     private void handleSQLException(SQLException e) {
         System.err.println("SQL ошибка:");
         System.err.println("Сообщение: " + e.getMessage());

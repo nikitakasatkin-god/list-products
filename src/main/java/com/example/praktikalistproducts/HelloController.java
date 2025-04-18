@@ -40,6 +40,9 @@ public class HelloController {
     private final ObservableList<String> tags = FXCollections.observableArrayList();
     private FilteredList<Product> filteredProducts;
 
+    /**
+     * Перечисление подсказок для кнопок интерфейса
+     */
     private enum ButtonHint {
         ADD_BUTTON("Добавить новый продукт"),
         EDIT_BUTTON("Редактировать выбранный продукт"),
@@ -61,6 +64,9 @@ public class HelloController {
         }
     }
 
+    /**
+     * Инициализация контроллера, настройка таблицы и элементов управления
+     */
     @FXML
     public void initialize() {
         // Настройка колонок таблицы
@@ -84,7 +90,6 @@ public class HelloController {
         // Настройка Tooltip для кнопок
         setupTooltips();
 
-
         // Инициализация данных
         changeDataSource();
 
@@ -92,6 +97,9 @@ public class HelloController {
         setupEventHandlers();
     }
 
+    /**
+     * Настройка всплывающих подсказок для элементов управления
+     */
     private void setupTooltips() {
         setTooltipForControl(addButton, ButtonHint.ADD_BUTTON);
         setTooltipForControl(editButton, ButtonHint.EDIT_BUTTON);
@@ -103,6 +111,11 @@ public class HelloController {
         setTooltipForControl(ramRadio, ButtonHint.RAM_RADIO);
     }
 
+    /**
+     * Установка всплывающей подсказки для конкретного элемента управления
+     * @param control элемент управления
+     * @param buttonHint тип подсказки из перечисления ButtonHint
+     */
     private void setTooltipForControl(Control control, ButtonHint buttonHint) {
         String hintText;
         switch (buttonHint) {
@@ -136,7 +149,9 @@ public class HelloController {
         control.setTooltip(new Tooltip(hintText));
     }
 
-    // Остальные методы остаются без изменений
+    /**
+     * Настройка обработчиков событий для кнопок и таблицы
+     */
     private void setupEventHandlers() {
         addButton.setOnAction(event -> addProduct());
         editButton.setOnAction(event -> editProduct());
@@ -152,6 +167,9 @@ public class HelloController {
                 });
     }
 
+    /**
+     * Изменение источника данных в зависимости от выбранного RadioButton
+     */
     @FXML
     private void changeDataSource() {
         String selectedSource;
@@ -175,11 +193,17 @@ public class HelloController {
         }
     }
 
+    /**
+     * Обновление данных в таблице из текущего источника данных
+     */
     private void refreshData() {
         products.setAll(productDAO.getAllProducts());
         updateTagsList();
     }
 
+    /**
+     * Обновление списка тегов для ComboBox фильтрации
+     */
     private void updateTagsList() {
         tags.clear();
         products.stream()
@@ -189,6 +213,9 @@ public class HelloController {
         tagFilterComboBox.setItems(tags);
     }
 
+    /**
+     * Добавление нового продукта на основе данных из полей ввода
+     */
     private void addProduct() {
         try {
             String name = nameField.getText().trim();
@@ -212,6 +239,9 @@ public class HelloController {
         }
     }
 
+    /**
+     * Редактирование выбранного продукта
+     */
     private void editProduct() {
         Product selected = table.getSelectionModel().getSelectedItem();
         if (selected == null) {
@@ -245,6 +275,9 @@ public class HelloController {
         }
     }
 
+    /**
+     * Удаление выбранного продукта
+     */
     private void deleteProduct() {
         Product selected = table.getSelectionModel().getSelectedItem();
         if (selected == null) {
@@ -261,6 +294,9 @@ public class HelloController {
         }
     }
 
+    /**
+     * Фильтрация продуктов по выбранному тегу
+     */
     private void filterProducts() {
         String selectedTag = tagFilterComboBox.getSelectionModel().getSelectedItem();
         if (selectedTag != null && !selectedTag.isEmpty()) {
@@ -269,11 +305,18 @@ public class HelloController {
         }
     }
 
+    /**
+     * Сброс фильтрации продуктов
+     */
     private void clearFilter() {
         filteredProducts.setPredicate(null);
         tagFilterComboBox.getSelectionModel().clearSelection();
     }
 
+    /**
+     * Заполнение полей ввода данными выбранного продукта
+     * @param product выбранный продукт из таблицы
+     */
     private void fillFields(Product product) {
         nameField.setText(product.getName());
         countField.setText(String.valueOf(product.getCount()));
@@ -281,6 +324,9 @@ public class HelloController {
         statusField.setText(product.getStatus());
     }
 
+    /**
+     * Очистка полей ввода
+     */
     private void clearFields() {
         nameField.clear();
         countField.clear();
@@ -288,6 +334,12 @@ public class HelloController {
         statusField.clear();
     }
 
+    /**
+     * Отображение диалогового окна с сообщением об ошибке
+     * @param title заголовок окна
+     * @param header заголовок сообщения
+     * @param content текст сообщения
+     */
     private void showAlert(String title, String header, String content) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
