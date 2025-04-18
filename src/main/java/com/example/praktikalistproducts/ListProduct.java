@@ -5,6 +5,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 /**
+ *
  * Класс для управления списком продуктов.
  * Предоставляет методы для работы с ObservableList продуктов.
  */
