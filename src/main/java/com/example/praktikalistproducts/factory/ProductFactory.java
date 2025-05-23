@@ -1,5 +1,6 @@
-package com.example.praktikalistproducts.dao;
+package com.example.praktikalistproducts.factory;
 
+import com.example.praktikalistproducts.dao.ProductDAO;
 import com.example.praktikalistproducts.dao.impl.MySQLProductDAO;
 import com.example.praktikalistproducts.dao.impl.MemoryProductDAO;
 import com.example.praktikalistproducts.dao.impl.PostgresProductDAO;

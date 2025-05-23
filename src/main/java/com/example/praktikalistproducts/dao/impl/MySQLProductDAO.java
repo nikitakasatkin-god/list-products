@@ -12,9 +12,9 @@ public class MySQLProductDAO implements ProductDAO {
 
     // Конструктор - устанавливает соединение с MySQL
     public MySQLProductDAO() {
-        String url = "jdbc:mysql://localhost:3306/product_db?useSSL=false&serverTimezone=UTC";
-        String user = "root";
-        String password = "your_password";
+        String url = System.getenv("DB_URL") + "?useSSL=false&serverTimezone=UTC";
+        String user = System.getenv("DB_USER");
+        String password = System.getenv("DB_PASSWORD");
 
         try {
             conn = DriverManager.getConnection(url, user, password);

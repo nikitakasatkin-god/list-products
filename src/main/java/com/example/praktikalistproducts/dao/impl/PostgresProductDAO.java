@@ -3,6 +3,8 @@ package com.example.praktikalistproducts.dao.impl;
 import com.example.praktikalistproducts.dao.ProductDAO;
 import com.example.praktikalistproducts.model.Product;
 import com.example.praktikalistproducts.model.Tag;
+import io.github.cdimascio.dotenv.Dotenv;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +14,7 @@ import java.util.List;
  */
 public class PostgresProductDAO implements ProductDAO {
     private Connection conn;
+    private static final Dotenv dotenv = Dotenv.load(); // Загрузка .env
 
     /**
      * Конструктор, инициализирующий подключение к PostgreSQL.
@@ -21,9 +24,9 @@ public class PostgresProductDAO implements ProductDAO {
         try {
             Class.forName("org.postgresql.Driver");
             conn = DriverManager.getConnection(
-                    "jdbc:postgresql://localhost:5432/postgres",
-                    "postgres",
-                    "password");
+                    dotenv.get("POSTGRES_URL"),
+                    dotenv.get("POSTGRES_USER"),
+                    dotenv.get("POSTGRES_PASSWORD"));
             initializeDatabase();
         } catch (Exception e) {
             e.printStackTrace();
