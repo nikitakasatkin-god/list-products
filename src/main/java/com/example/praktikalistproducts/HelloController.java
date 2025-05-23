@@ -1,7 +1,7 @@
 package com.example.praktikalistproducts;
 
 import com.example.praktikalistproducts.dao.ProductDAO;
-import com.example.praktikalistproducts.dao.ProductFactory;
+import com.example.praktikalistproducts.factory.ProductFactory;
 import com.example.praktikalistproducts.model.Product;
 import com.example.praktikalistproducts.model.Tag;
 import javafx.collections.FXCollections;
