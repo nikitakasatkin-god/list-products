@@ -41,9 +41,9 @@ public class PostgresProductDAO implements ProductDAO {
         try {
             Class.forName("org.postgresql.Driver");
             conn = DriverManager.getConnection(
-                    "jdbc:postgresql://localhost:5432/product_db",
-                    "postgres",
-                    "password");
+                    dotenv.get("POSTGRES_URL"),
+                    dotenv.get("POSTGRES_USER"),
+                    dotenv.get("POSTGRES_PASSWORD"));
             initializeDatabase();
         } catch (Exception e) {
             System.err.println("Ошибка при подключении к PostgreSQL:");

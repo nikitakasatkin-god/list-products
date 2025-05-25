@@ -6,5 +6,6 @@
 !pom.xml
 
 # Environment files
-.env          # основной файл
-*.env         # все файлы с расширением .env
+.env
+*.env
+config.env
