@@ -1,11 +1,14 @@
-# Игнорируем все по умолчанию
-/*
-
-!src/
-!README.md
-!pom.xml
-
-# Environment files
+# Environment variables
 .env
 *.env
-config.env
+
+# Build directories
+target/
+bin/
+
+# IDE files
+.idea/
+*.iml
+
+# System files
+.DS_Store
