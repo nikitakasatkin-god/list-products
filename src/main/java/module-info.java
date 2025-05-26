@@ -8,5 +8,6 @@ module com.example.praktikalistproducts {
     exports com.example.praktikalistproducts;
     exports com.example.praktikalistproducts.model;
     exports com.example.praktikalistproducts.controller;
+    exports com.example.praktikalistproducts.dao.impl;
     opens com.example.praktikalistproducts.controller to javafx.fxml;
 }
