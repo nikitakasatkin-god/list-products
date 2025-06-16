@@ -40,5 +40,5 @@ public interface ProductDAO {
      * @param id идентификатор продукта для удаления
      * @throws IllegalArgumentException если продукт с указанным id не существует
      */
-    void deleteProduct(int id);
+    void deleteProduct(long id);
 }

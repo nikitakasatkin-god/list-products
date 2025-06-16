@@ -108,7 +108,7 @@ public class MemoryProductDAO implements ProductDAO {
      * @param id идентификатор продукта для удаления
      */
     @Override
-    public void deleteProduct(int id) {
+    public void deleteProduct(long id) {
         products.removeIf(p -> p.getId() == id);
     }
 }

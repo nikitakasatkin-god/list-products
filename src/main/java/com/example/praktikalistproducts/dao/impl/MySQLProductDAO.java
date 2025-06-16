@@ -106,11 +106,11 @@ public class MySQLProductDAO implements ProductDAO {
 
     // Удаляет продукт по ID
     @Override
-    public void deleteProduct(int id) {
+    public void deleteProduct(long id) {
         String sql = "DELETE FROM products WHERE id = ?";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, id);
+            pstmt.setInt(1, (int) id);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Ошибка при удалении продукта:");
